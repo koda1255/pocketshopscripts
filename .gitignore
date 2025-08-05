@@ -1,0 +1,41 @@
+# ===================================================================
+# General .gitignore for a PocketMine-MP Plugin (e.g., PocketShopScripts)
+# ===================================================================
+
+# --- Dependencies ---
+# Ignore Composer's vendor directory. Run `composer install` to get these.
+/vendor/
+
+# NOTE: It is recommended to COMMIT your `composer.lock` file for plugins.
+# This ensures all developers and servers use the exact same dependency versions.
+# If this were a library, you would typically ignore it.
+
+# --- Build Artifacts ---
+# Ignore the compiled plugin .phar file. This is generated, not source code.
+*.phar
+
+# --- IDE & Editor Configuration ---
+# Ignore configuration files from popular editors.
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# --- PocketMine-MP Server Files ---
+# If you are developing inside a full server directory, these lines
+# will prevent you from committing the entire server.
+/plugins/
+/worlds/
+/players/
+/plugin_data/
+PocketMine-MP.phar
+server.properties
+server.log
+
+# --- OS Generated Files ---
+.DS_Store
+Thumbs.db
+
+# --- Sensitive Information ---
+# Ignore environment files that may contain API keys or passwords.
+.env
