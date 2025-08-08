@@ -107,9 +107,55 @@ def detect_csv_format(fieldnames: List[str]) -> str:
     
     return "simple"
 
+def process_csv_content(csv_stream) -> List[Dict[str, str]]:
+    """
+    Parses CSV content from a stream and converts it to the required JSON format.
+    This is the core logic, designed to be imported by other scripts.
+    
+    Args:
+        csv_stream: A file-like object containing the CSV content.
+        
+    Returns:
+        List of dictionaries with card information
+        
+    Raises:
+        ValueError: If CSV format is invalid or contains invalid data
+    """
+    products = []
+    try:
+        # Try to detect the delimiter from the stream
+        sample = csv_stream.read(1024)
+        csv_stream.seek(0)
+        
+        delimiters = [',', ';', '\t']
+        detected_delimiter = ','
+        
+        for delimiter in delimiters:
+            if delimiter in sample:
+                detected_delimiter = delimiter
+                break
+        
+        reader = csv.DictReader(csv_stream, delimiter=detected_delimiter)
+        fieldnames = reader.fieldnames or []
+        
+        # Detect CSV format
+        csv_format = detect_csv_format(fieldnames)
+        print(f"📋 Detected CSV format: {csv_format}")
+        
+        if csv_format == "tcgplayer":
+            products = parse_tcgplayer_format(reader)
+        else:
+            products = parse_simple_format(reader)
+                
+    except csv.Error as e:
+        raise ValueError(f"CSV parsing error: {e}")
+    
+    return products
+
 def parse_csv_file(csv_file_path: str) -> List[Dict[str, str]]:
     """
-    Parses a CSV file and converts it to the required JSON format.
+    Parses a CSV file from a given path. This function is a wrapper
+    for process_csv_content and is used for standalone script execution.
     
     Args:
         csv_file_path: Path to the input CSV file
@@ -119,44 +165,12 @@ def parse_csv_file(csv_file_path: str) -> List[Dict[str, str]]:
         
     Raises:
         FileNotFoundError: If CSV file doesn't exist
-        ValueError: If CSV format is invalid or contains invalid data
     """
     if not os.path.exists(csv_file_path):
         raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
     
-    products = []
-    
-    try:
-        with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
-            # Try to detect the delimiter
-            sample = csvfile.read(1024)
-            csvfile.seek(0)
-            
-            # Test common delimiters
-            delimiters = [',', ';', '\t']
-            detected_delimiter = ','
-            
-            for delimiter in delimiters:
-                if delimiter in sample:
-                    detected_delimiter = delimiter
-                    break
-            
-            reader = csv.DictReader(csvfile, delimiter=detected_delimiter)
-            fieldnames = reader.fieldnames or []
-            
-            # Detect CSV format
-            csv_format = detect_csv_format(fieldnames)
-            print(f"📋 Detected CSV format: {csv_format}")
-            
-            if csv_format == "tcgplayer":
-                products = parse_tcgplayer_format(reader)
-            else:
-                products = parse_simple_format(reader)
-                    
-    except csv.Error as e:
-        raise ValueError(f"CSV parsing error: {e}")
-    
-    return products
+    with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
+        return process_csv_content(csvfile)
 
 def parse_simple_format(reader) -> List[Dict[str, str]]:
     """
